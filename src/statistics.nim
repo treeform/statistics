@@ -1,6 +1,4 @@
-import algorithm, tables, math
-
-type StatisticsError* = object of ValueError
+import algorithm, math, tables
 
 proc isNaN*(v: float): bool =
   ## Is the current float a Nan or Inf.
@@ -75,7 +73,7 @@ proc harmonicMean*(s: seq[SomeNumber]): float =
   )
   s2.len.float/s2.total
 
-proc quantiles*(s: seq[SomeNumber], n=4): seq[float] =
+proc quantiles*(s: seq[SomeNumber], n = 4): seq[float] =
   ## Divide the s into N regions with equal probability.
   if s.len < 2:
     return
@@ -94,3 +92,185 @@ proc quantiles*(s: seq[SomeNumber], n=4): seq[float] =
         s[j-1].float * (n - delta).float + s[j].float * delta.float
       ) / n.float
     result.add(interpolated)
+
+proc variance*(s: seq[SomeNumber]): float =
+  ## Computes the sample variance of a sequence.
+  if s.len <= 1:
+    return
+  let a = s.average()
+  for v in s:
+    result += (v.float - a) ^ 2
+  result /= (s.len.float - 1)
+
+proc pvariance*(s: seq[SomeNumber]): float =
+  ## Computes the population variance of a sequence.
+  if s.len <= 1:
+    return
+  let a = s.average()
+  for v in s:
+    result += (v.float - a) ^ 2
+  result /= s.len.float
+
+proc stdev*(s: seq[SomeNumber]): float =
+  ## Computes the sample standard deviation of a sequence.
+  sqrt(s.variance)
+
+proc pstdev*(s: seq[SomeNumber]): float =
+  ## Computes the population standard deviation of a sequence.
+  sqrt(s.pvariance)
+
+type NormalDistribution* = object
+  mu*: float    # Mean.
+  sigma*: float # Standard deviation.
+
+proc newNormalDistribution*(mu, sigma: float): NormalDistribution =
+  ## Creates a new NormalDistribution from mean and standard deviation.
+  result.mu = mu
+  result.sigma = sigma
+
+proc newNormalDistribution*(s: seq[SomeNumber]): NormalDistribution =
+  ## Creates a new NormalDistribution from a sequence.
+  result.mu = s.average
+  result.sigma = s.stdev
+
+proc pdf*(n: NormalDistribution, v: float): float =
+  ## Probability density function.
+  let variance = n.sigma ^ 2
+  exp((v - n.mu) ^ 2 / (-2.0 * variance)) / sqrt(TAU * variance)
+
+proc cdf*(n: NormalDistribution, v: float): float =
+  ## Cumulative distribution function.
+  return 0.5 * (1.0 + erf((v - n.mu) / (n.sigma * sqrt(2.0))))
+
+proc invCdf*(n: NormalDistribution, p: float): float =
+  ## Cumulative distribution (percent point, quantile) function.
+  # Wichura, M.J. (1988). "Algorithm AS241: The Percentage Points of the
+  # Normal Distribution".  Applied Statistics. Blackwell Publishing. 37
+  # (3): 477–484. doi:10.2307/2347330. JSTOR 2347330.
+  let q = p - 0.5
+  var x, r, num, den: float
+  if abs(q) <= 0.425:
+    r = 0.180625 - q * q
+    num = (((((((
+      2.50908_09287_30122_6727e+3 * r +
+      3.34305_75583_58812_8105e+4) * r +
+      6.72657_70927_00870_0853e+4) * r +
+      4.59219_53931_54987_1457e+4) * r +
+      1.37316_93765_50946_1125e+4) * r +
+      1.97159_09503_06551_4427e+3) * r +
+      1.33141_66789_17843_7745e+2) * r +
+      3.38713_28727_96366_6080e+0) * q
+    den = (((((((
+      5.22649_52788_52854_5610e+3 * r +
+      2.87290_85735_72194_2674e+4) * r +
+      3.93078_95800_09271_0610e+4) * r +
+      2.12137_94301_58659_5867e+4) * r +
+      5.39419_60214_24751_1077e+3) * r +
+      6.87187_00749_20579_0830e+2) * r +
+      4.23133_30701_60091_1252e+1) * r +
+      1.0)
+    x = num / den
+    return n.mu + (x * n.sigma)
+  if q <= 0.0:
+    r = p
+  else:
+    r = 1.0 - p
+  r = sqrt(-ln(r))
+  if r <= 5.0:
+    r = r - 1.6
+    num = (((((((
+      7.74545_01427_83414_07640e-4 * r +
+      2.27238_44989_26918_45833e-2) * r +
+      2.41780_72517_74506_11770e-1) * r +
+      1.27045_82524_52368_38258e+0) * r +
+      3.64784_83247_63204_60504e+0) * r +
+      5.76949_72214_60691_40550e+0) * r +
+      4.63033_78461_56545_29590e+0) * r +
+      1.42343_71107_49683_57734e+0)
+    den = (((((((
+      1.05075_00716_44416_84324e-9 * r +
+      5.47593_80849_95344_94600e-4) * r +
+      1.51986_66563_61645_71966e-2) * r +
+      1.48103_97642_74800_74590e-1) * r +
+      6.89767_33498_51000_04550e-1) * r +
+      1.67638_48301_83803_84940e+0) * r +
+      2.05319_16266_37758_82187e+0) * r +
+      1.0)
+  else:
+    r = r - 5.0
+    num = (((((((
+      2.01033_43992_92288_13265e-7 * r +
+      2.71155_55687_43487_57815e-5) * r +
+      1.24266_09473_88078_43860e-3) * r +
+      2.65321_89526_57612_30930e-2) * r +
+      2.96560_57182_85048_91230e-1) * r +
+      1.78482_65399_17291_33580e+0) * r +
+      5.46378_49111_64114_36990e+0) * r +
+      6.65790_46435_01103_77720e+0)
+    den = (((((((
+      2.04426_31033_89939_78564e-15 * r +
+      1.42151_17583_16445_88870e-7) * r +
+      1.84631_83175_10054_68180e-5) * r +
+      7.86869_13114_56132_59100e-4) * r +
+      1.48753_61290_85061_48525e-2) * r +
+      1.36929_88092_27358_05310e-1) * r +
+      5.99832_20655_58879_37690e-1) * r +
+      1.0)
+  x = num / den
+  if q < 0.0:
+    x = -x
+  return n.mu + (x * n.sigma)
+
+proc quantiles*(nd: NormalDistribution, n = 4): seq[float] =
+  ## Divide the normal distribution into N regions with equal probability.
+  if n < 2:
+    return
+  if n == 2:
+    return @[nd.mu]
+  for i in 1 ..< n:
+    result.add(nd.inv_cdf(i / n))
+
+proc variance*(nd: NormalDistribution): float =
+  ## Computes the sample variance of a normal distribution.
+  nd.sigma ^ 2
+
+proc overlap*(a, b: NormalDistribution): float =
+  # Compute the overlapping coefficient (OVL) between two normal distributions.
+  # See: "The overlapping coefficient as a measure of agreement between
+  # probability distributions and point estimation of the overlap of two
+  # normal densities" -- Henry F. Inman and Edwin L. Bradley Jr
+  # http://dx.doi.org/10.1080/03610928908830127
+  var
+    a = a
+    b = b
+  if (b.sigma, b.mu) < (a.sigma, a.mu):
+    (a, b) = (b, a)
+  if a.variance == 0 or b.variance == 0:
+    return NaN
+  let
+    dv = b.variance - a.variance
+    dm = abs(b.mu - a.mu)
+  if dv == 0:
+    return 1.0 - erf(dm / (2.0 * a.sigma * sqrt(2.0)))
+  let
+    xa = a.mu * b.variance - b.mu * a.variance
+    xb = a.sigma * b.sigma * sqrt(dm ^ 2 + dv * ln(b.variance / a.variance))
+    x1 = (xa + xb) / dv
+    x2 = (xa - xb) / dv
+  return 1.0 - (abs(b.cdf(x1) - a.cdf(x1)) + abs(b.cdf(x2) - a.cdf(x2)))
+
+proc `+`*(a, b: NormalDistribution): NormalDistribution =
+  ## Adds two NormalDistributions.
+  newNormalDistribution(a.mu + b.mu, hypot(a.sigma, b.sigma))
+
+proc `-`*(a, b: NormalDistribution): NormalDistribution =
+  ## Subtracts two NormalDistributions.
+  newNormalDistribution(a.mu - b.mu, hypot(a.sigma, b.sigma))
+
+proc `*`*(a: NormalDistribution, b: float): NormalDistribution =
+  ## Multiplies two NormalDistributions.
+  newNormalDistribution(a.mu * b, a.sigma * b.abs)
+
+proc `/`*(a: NormalDistribution, b: float): NormalDistribution =
+  ## Divide two NormalDistributions.
+  newNormalDistribution(a.mu / b, a.sigma / b.abs)
