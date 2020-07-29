@@ -15,6 +15,7 @@ StatisticsError = object of ValueError
 
 ## **proc** isNaN
 
+Is the current float a Nan or Inf.
 
 ```nim
 proc isNaN(v: float): bool
@@ -22,6 +23,7 @@ proc isNaN(v: float): bool
 
 ## **proc** `~=`
 
+Are the floats kind of equal?
 
 ```nim
 proc `~=`(a, b: float): bool
@@ -29,6 +31,7 @@ proc `~=`(a, b: float): bool
 
 ## **proc** `~=`
 
+Are the sequences of floats kind of equal?
 
 ```nim
 proc `~=`(a, b: seq[float]): bool
@@ -44,7 +47,7 @@ proc total(s: seq[SomeNumber]): float
 
 ## **proc** average
 
-Computes average or mean of a sequence.
+Computes average (mean) of a sequence.
 
 ```nim
 proc average(s: seq[SomeNumber]): float
@@ -76,7 +79,7 @@ proc multiMode(s: seq[SomeNumber]): CountTable[float]
 
 ## **proc** map
 
-Maps a function onto a sequence.
+Maps a function onto a sequence of floats.
 
 ```nim
 proc map(s: seq[SomeNumber]; fn: proc (v: float): float): seq[float]
@@ -104,12 +107,4 @@ Divide the s into N regions with equal probability.
 
 ```nim
 proc quantiles(s: seq[SomeNumber]; n = 4): seq[float]
-```
-
-## **proc** quantilesInclusive
-
-Divide the s into N regions with equal probability.
-
-```nim
-proc quantilesInclusive(s: seq[SomeNumber]; n = 4): seq[float]
 ```
