@@ -6,7 +6,7 @@ proc isNaN*(v: float): bool =
 
 proc `~=`*(a, b: float): bool =
   ## Are the floats kind of equal?
-  abs(a - b) < 1E-7
+  abs(a - b) < 1E-5
 
 proc `~=`*(a, b: seq[float]): bool =
   ## Are the sequences of floats kind of equal?
@@ -14,7 +14,7 @@ proc `~=`*(a, b: seq[float]): bool =
     return false
   else:
     for i in 0 ..< a.len:
-      if abs(a[i] - b[i]) > 1E-7:
+      if abs(a[i] - b[i]) > 1E-5:
         return false
   return true
 
@@ -23,8 +23,9 @@ proc total*(s: seq[SomeNumber]): float =
   for v in s:
     result += v.float
 
-proc average*(s: seq[SomeNumber]): float =
-  ## Computes average (mean) of a sequence.
+# TODO maybe rename to mean?
+proc mean*(s: seq[SomeNumber]): float =
+  ## Computes mean (average) of a sequence.
   if s.len == 0: return NaN
   s.total / s.len.float
 
@@ -62,7 +63,7 @@ proc map*(s: seq[SomeNumber], fn: proc(v: float): float): seq[float] =
 
 proc geometricMean*(s: seq[SomeNumber]): float =
   ## Computes the geometric mean of a sequence.
-  exp(average(s.map(ln)))
+  exp(mean(s.map(ln)))
 
 proc harmonicMean*(s: seq[SomeNumber]): float =
   ## Computes the harmonic mean (subcontrary mean) of a sequence.
@@ -97,7 +98,7 @@ proc variance*(s: seq[SomeNumber]): float =
   ## Computes the sample variance of a sequence.
   if s.len <= 1:
     return
-  let a = s.average()
+  let a = s.mean()
   for v in s:
     result += (v.float - a) ^ 2
   result /= (s.len.float - 1)
@@ -106,7 +107,7 @@ proc pvariance*(s: seq[SomeNumber]): float =
   ## Computes the population variance of a sequence.
   if s.len <= 1:
     return
-  let a = s.average()
+  let a = s.mean()
   for v in s:
     result += (v.float - a) ^ 2
   result /= s.len.float
@@ -130,7 +131,7 @@ proc newNormalDistribution*(mu, sigma: float): NormalDistribution =
 
 proc newNormalDistribution*(s: seq[SomeNumber]): NormalDistribution =
   ## Creates a new NormalDistribution from a sequence.
-  result.mu = s.average
+  result.mu = s.mean
   result.sigma = s.stdev
 
 proc pdf*(n: NormalDistribution, v: float): float =
@@ -228,7 +229,7 @@ proc quantiles*(nd: NormalDistribution, n = 4): seq[float] =
   if n == 2:
     return @[nd.mu]
   for i in 1 ..< n:
-    result.add(nd.inv_cdf(i / n))
+    result.add(nd.invCdf(i / n))
 
 proc variance*(nd: NormalDistribution): float =
   ## Computes the sample variance of a normal distribution.
@@ -274,3 +275,145 @@ proc `*`*(a: NormalDistribution, b: float): NormalDistribution =
 proc `/`*(a: NormalDistribution, b: float): NormalDistribution =
   ## Divide two NormalDistributions.
   newNormalDistribution(a.mu / b, a.sigma / b.abs)
+
+proc zScore*(mu, sigma, x: float): float =
+  ## Computes z score (z statistic).
+  (x - mu) / sigma
+
+proc zScore*(nd: NormalDistribution, x: float): float =
+  ## Computes z score (z statistic) of normal distribution and a test.
+  zScore(nd.mu, nd.sigma, x)
+
+proc zScore*(a, b: seq[float]): float =
+  ## Computes z score (z statistic) of two sequencies.
+  zScore(a.mean, a.stdev, b.mean)
+
+proc zScoreToPValue*(zScore: float): float =
+  ## Computes p-value from a z-score
+  return 1 - 0.5 * (1.0 + erf(zScore / sqrt(2.0)))
+
+proc zScore*(muA, muB, sigmaA, sigmaB, numA, numB: float): float =
+  return (muB - muA)/sqrt(sigmaB^2 / numB + sigmaA^2 / numA)
+
+proc zScore*(rateA, rateB, numA, numB: float): float =
+  ## Proportional zTest.
+  let
+    varB = rateB * (1-rateB)
+    varA = rateA * (1-rateA)
+  return (rateA - rateB)/sqrt(varB/numB + varA/numA)
+
+# proc tScore*(mu, sigma, x: float): float =
+#   ## Computes t score (t statistic).
+#   (x - mu) / sigma
+
+# proc tScore*(nd: NormalDistribution, x: float): float =
+#   ## Computes t score (t statistic).
+#   (x - nd.mu) / nd.sigma
+
+# proc tScore*(a, b: seq[float]): float =
+#   ## Computes t score (t statistic).
+#   zScore(a.mean, a.pstdev, b.mean)
+
+proc pValue*(zScore: float): float =
+  ## Computes p-value from a z-score
+  return 0.5 * (1.0 + erf(zScore / sqrt(2.0)))
+
+# proc tScoreToPValue*(zScore: float): float =
+#   ## Computes t-value from a z-score
+#   return 0.5 * (1.0 + erf(zScore / sqrt(2.0)))
+
+proc normalcdf*(minZ, maxZ, mean, std: float): float =
+  # Two sided CDF (two tailed CDF).
+  let nd = newNormalDistribution(mean, std)
+  return nd.cdf(minZ) + (1 - nd.cdf(maxZ))
+
+proc tStatistic*(muA, muB, sigmaA, sigmaB, numA, numB: float): float =
+  ## Same thing as zScore???
+  return (muB - muA)/sqrt(sigmaB^2 / numB + sigmaA^2 / numA)
+
+proc degreeOfFreedom*(
+  varA: float,
+  varB: float,
+  numA: float,
+  numB: float
+): float =
+  (varB/numA + varA/numA) ^ 2 / (
+    (varB / numB) ^ 2 / (numB - 1) +
+    (varA / numA) ^ 2 / (numA - 1)
+  )
+
+proc integrateInner(
+  f: proc(x: float): float,
+  xStart, xEnd: float,
+  n = 500
+): float =
+  ## Calculate the integral of f using Simpson's rule.
+  ## Based on the work of Hugo Granström Copyright (c) 2019 MIT License
+  ## https://github.com/HugoGranstrom/numericalnim
+
+  assert n >= 2
+  let dx = (xEnd - xStart) / n.float
+  var n = n
+  var xStart = xStart
+  result = f(xStart) - f(xStart)
+  if n mod 2 != 0:
+      result += 3 / 8 * dx * (f(xStart) +
+        3 * f(xStart + dx) +
+        3 * f(xStart + 2 * dx) +
+        f(xStart + 3 * dx))
+      xStart = xStart + 3 * dx
+      n = n - 3
+      if n == 0:
+          return result
+  var resultTemp = f(xStart) + f(xEnd)
+  var res1 = f(xStart) - f(xStart)
+  var res2 = res1
+  for j in 1 .. (n / 2 - 1).toInt:
+      res1 += f(xStart + dx * 2 * j.float)
+  for j in 1 .. (n / 2).toInt:
+      res2 += f(xStart + dx * (2 * j.float - 1))
+
+  resultTemp += 2.0 * res1 + 4.0 * res2
+  resultTemp *= dx / 3.0
+  result += resultTemp
+
+proc integrate*(
+  f: proc(x: float): float,
+  xStart, xEnd: float,
+  errorTolerance = 1e-8
+): float =
+  ## Calculate the integral of f using an adaptive Simpson's rule.
+  ## Based on the work of Hugo Granström Copyright (c) 2019 MIT License
+  ## https://github.com/HugoGranstrom/numericalnim
+
+  let zero = f(xStart) - f(xStart)
+  let value1 = integrateInner(f, xStart, xEnd, n = 2)
+  let value2 = integrateInner(f, xStart, xEnd, n = 4)
+  let error = (value2 - value1) / 15
+  var errorTolerance = errorTolerance
+  if errorTolerance < 1e-15:
+      errorTolerance = 1e-15
+  if abs(error - zero) < errorTolerance or abs(xEnd - xStart) < 1e-5:
+      return value2 + error
+  let m = (xStart + xEnd) / 2
+  let newN = errorTolerance / 2
+  let left = integrate(f, xStart, m, errorTolerance = newN)
+  let right = integrate(f, m, xEnd, errorTolerance = newN)
+  return left + right
+
+#                                  gamma((df+1)/2)
+#    t.pdf(x, df) = ---------------------------------------------------
+#                   sqrt(pi*df) * gamma(df/2) * (1+x**2/df)**((df+1)/2)
+
+proc tPdf*(x: float, df: int): float =
+  let df = df.float
+  gamma((df + 1) / 2) / (
+    sqrt(PI * df) *
+    gamma(df / 2) *
+    pow(1 + x ^ 2 / df, (df + 1) / 2)
+  )
+
+proc tCdf*(x: float, df: int): float =
+  func f(x: float): float =
+    tPdf(x, df)
+  integrate(f, -1E10, x)

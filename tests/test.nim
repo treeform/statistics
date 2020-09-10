@@ -1,4 +1,4 @@
-import statistics, tables
+import statistics, tables, strformat, math
 
 var emptySeq: seq[int]
 var t1 = @[13, 13, 13, 13, 14, 14, 16, 18, 21]
@@ -6,9 +6,9 @@ assert total(emptySeq) == 0
 assert total(@[1, 2, 3]) == 6
 assert t1.total() == 135.0
 
-assert average(emptySeq).isNaN
-assert average(@[1, 2, 3]) == 2
-assert t1.average() == 15
+assert mean(emptySeq).isNaN
+assert mean(@[1, 2, 3]) == 2
+assert t1.mean() == 15
 
 assert median(emptySeq).isNaN
 assert median(@[1, 2, 3]) == 2
@@ -118,3 +118,170 @@ assert (a * 2).sigma ~= 3.2
 
 assert (a / 2).mu ~= 1.2
 assert (a / 2).sigma ~= 0.8
+
+block:
+  # z-test
+  assert zScore(469, 119, 650) ~= 1.521008403361344
+  let nd = newNormalDistribution(66.01624559725403, 2.889791503580723)
+  assert nd.zScore(67.440471) ~= 0.492847
+  assert nd.zScore(65.599034) ~= -0.144374
+  assert nd.zScore(67.878297) ~= 0.644355
+  assert nd.zScore(70.416787) ~= 1.522788
+  assert nd.zScore(65.320955) ~= -0.240602
+  let
+    a = @[1.0, 2.0, 3.0, 4.0]
+    b = @[2.0, 3.0, 4.0, 5.0]
+  assert zScore(a, a) ~= 0
+  assert zScore(a, b) ~= 0.7745966
+  assert 1 - zScore(a, b).zScoreToPValue ~= 0.780710
+
+  let
+    muA = 60.0
+    muB = 62.0
+    sigmaA = 40.0
+    sigmaB = 45.0
+    numA = 6000.0
+    numB = 4000.0
+
+  let
+    z = zScore(muA, muB, sigmaA, sigmaB, numA, numB)
+  assert z ~= 2.2749070654279993
+  assert z.zScoreToPValue ~= 0.011455752709549046
+
+  #Z-score:
+  #p-value:
+
+
+
+
+
+block:
+  # X^2-test
+  let
+    numA = 6000
+    numB = 4000
+    convA = 90
+    convB = 80
+    nonConvA = 5910
+    nonConvB = 3920
+
+  let hatP = (convA + convB) / (nonConvA + nonConvB + convA + convB)
+
+  assert hatP ~= 0.017
+
+# block:
+#   # t-test
+#   let
+#     a = @[1.0, 2.0, 3.0, 4.0]
+#     b = @[2.0, 3.0, 4.0, 5.0]
+#   assert tScore(a, a) ~= 0
+#   assert tScore(a, b) ~= 0.894427190
+
+
+# echo tScoreToPValue(0.391)#  = 0.6955
+
+
+#echo normalcdf(-2.5, 2.5, 0, 1)
+
+
+block display:
+  echo "Normal Distribution"
+  let n = newNormalDistribution(0, 1)
+  for i in -30 .. 30:
+    let x = i.float/10.0
+    var s = ""
+    for j in 0 .. (n.pdf(x) * 100).int:
+      s.add "*"
+    echo &"{x:>10} ", s
+
+block display:
+  echo "Student's t-distribution"
+  #et n = newNormalDistribution(0, 1)
+  for i in -30 .. 30:
+    let x = i.float/10.0
+    var s = ""
+    for j in 0 .. (tPdf(x, 1) * 100).int:
+      s.add "*"
+    echo &"{x:>10} ", s
+
+
+
+#import numericalnim
+import print
+block integration:
+
+
+  # echo "1.0 test"
+  func line(x: float, optional: seq[float]): float = 1.0
+  # assert areaUnder(line, 0, 1) ~= 1.0
+
+  # func lineUp(x: float): float = x
+  # echo areaUnder(lineUp, 0, 1)
+
+  # func lineUpOne(x: float): float = x + 1.0
+  # echo areaUnder(lineUpOne, 0, 1)
+
+  # func nn(x: float): float =
+  #   let n = newNormalDistribution(0, 1)
+  #   n.pdf(x)
+
+  # echo areaUnder(nn, 0, 1)
+  # echo 1 - normalcdf(0, 1, 0, 1)
+
+
+  func tt(x: float): float =
+    tPdf(x, 1)
+  # echo areaUnder(tt, -1E100, 0)
+
+  assert tPdf(0, 1)  ~= 0.31830988618379075
+  assert tPdf(1, 1)  ~= 0.15915494309189537
+  assert tPdf(-1, 1) ~= 0.15915494309189537
+  assert tPdf(PI, 1) ~= 0.029284403961554437
+  assert tPdf(0, 3)  ~= 0.36755259694786135
+  assert tPdf(1, 3)  ~= 0.20674833578317203
+  assert tPdf(-1, 3) ~= 0.20674833578317203
+  assert tPdf(PI, 3) ~= 0.019972462315558128
+
+  assert tCdf(0, 1)  ~= 0.5
+  assert tCdf(1, 1)  ~= 0.7500000000000002
+  assert tCdf(-1, 1) ~= 0.24999999999999978
+  assert tCdf(PI, 1) ~= 0.9019067380477064
+  assert tCdf(0, 3)  ~= 0.5
+  assert tCdf(1, 3)  ~= 0.8044988905221148
+  assert tCdf(-1, 3) ~= 0.19550110947788527
+  assert tCdf(PI, 3) ~= 0.9742000757096718
+
+  # func tt2(x: float, optional: seq[float]): float =
+  #   tPdf(x, 1)
+  # let f = tt2
+  let xStart = -1E10
+  let xEnd = 0.0
+
+  # print trapz(f, xStart, xEnd)
+  # print simpson(f, xStart, xEnd)
+  # print adaptiveSimpson(f, xStart, xEnd)
+  # print gaussQuad(f, xStart, xEnd)
+  # print adaptiveGauss(f, xStart, xEnd)
+  # print romberg(f, xStart, xEnd)
+
+  print integrate(tt, xStart, xEnd)
+
+  assert integrate(tt, xStart, xEnd) ~= 0.5
+
+# t.pdf(0, 1) = 0.31830988618379075
+# t.pdf(1, 1) = 0.15915494309189537
+# t.pdf(-1, 1) = 0.15915494309189537
+# t.pdf(PI, 1) = 0.029284403961554437
+# t.pdf(0, 3) = 0.36755259694786135
+# t.pdf(1, 3) = 0.20674833578317203
+# t.pdf(-1, 3) = 0.20674833578317203
+# t.pdf(PI, 3) = 0.019972462315558128
+
+# t.cdf(0, 1) = 0.5
+# t.cdf(1, 1) = 0.7500000000000002
+# t.cdf(-1, 1) = 0.24999999999999978
+# t.cdf(PI, 1) = 0.9019067380477064
+# t.cdf(0, 3) = 0.5
+# t.cdf(1, 3) = 0.8044988905221148
+# t.cdf(-1, 3) = 0.19550110947788527
+# t.cdf(PI, 3) = 0.9742000757096718
