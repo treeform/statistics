@@ -204,34 +204,12 @@ block display:
       s.add "*"
     echo &"{x:>10} ", s
 
-
-
-#import numericalnim
-import print
 block integration:
-
-
-  # echo "1.0 test"
-  func line(x: float, optional: seq[float]): float = 1.0
-  # assert areaUnder(line, 0, 1) ~= 1.0
-
-  # func lineUp(x: float): float = x
-  # echo areaUnder(lineUp, 0, 1)
-
-  # func lineUpOne(x: float): float = x + 1.0
-  # echo areaUnder(lineUpOne, 0, 1)
-
-  # func nn(x: float): float =
-  #   let n = newNormalDistribution(0, 1)
-  #   n.pdf(x)
-
-  # echo areaUnder(nn, 0, 1)
-  # echo 1 - normalcdf(0, 1, 0, 1)
-
-
   func tt(x: float): float =
     tPdf(x, 1)
-  # echo areaUnder(tt, -1E100, 0)
+  let xStart = -1E10
+  let xEnd = 0.0
+  assert integrate(tt, xStart, xEnd) ~= 0.5
 
   assert tPdf(0, 1)  ~= 0.31830988618379075
   assert tPdf(1, 1)  ~= 0.15915494309189537
@@ -250,38 +228,3 @@ block integration:
   assert tCdf(1, 3)  ~= 0.8044988905221148
   assert tCdf(-1, 3) ~= 0.19550110947788527
   assert tCdf(PI, 3) ~= 0.9742000757096718
-
-  # func tt2(x: float, optional: seq[float]): float =
-  #   tPdf(x, 1)
-  # let f = tt2
-  let xStart = -1E10
-  let xEnd = 0.0
-
-  # print trapz(f, xStart, xEnd)
-  # print simpson(f, xStart, xEnd)
-  # print adaptiveSimpson(f, xStart, xEnd)
-  # print gaussQuad(f, xStart, xEnd)
-  # print adaptiveGauss(f, xStart, xEnd)
-  # print romberg(f, xStart, xEnd)
-
-  print integrate(tt, xStart, xEnd)
-
-  assert integrate(tt, xStart, xEnd) ~= 0.5
-
-# t.pdf(0, 1) = 0.31830988618379075
-# t.pdf(1, 1) = 0.15915494309189537
-# t.pdf(-1, 1) = 0.15915494309189537
-# t.pdf(PI, 1) = 0.029284403961554437
-# t.pdf(0, 3) = 0.36755259694786135
-# t.pdf(1, 3) = 0.20674833578317203
-# t.pdf(-1, 3) = 0.20674833578317203
-# t.pdf(PI, 3) = 0.019972462315558128
-
-# t.cdf(0, 1) = 0.5
-# t.cdf(1, 1) = 0.7500000000000002
-# t.cdf(-1, 1) = 0.24999999999999978
-# t.cdf(PI, 1) = 0.9019067380477064
-# t.cdf(0, 3) = 0.5
-# t.cdf(1, 3) = 0.8044988905221148
-# t.cdf(-1, 3) = 0.19550110947788527
-# t.cdf(PI, 3) = 0.9742000757096718
