@@ -11,7 +11,7 @@ import statistics
 Is the current float a Nan or Inf.
 
 ```nim
-proc isNaN(v: float): bool
+proc isNaN(v: float): bool 
 ```
 
 ## **proc** `~=`
@@ -19,7 +19,7 @@ proc isNaN(v: float): bool
 Are the floats kind of equal?
 
 ```nim
-proc `~=`(a, b: float): bool
+proc `~=`(a, b: float): bool 
 ```
 
 ## **proc** `~=`
@@ -27,7 +27,7 @@ proc `~=`(a, b: float): bool
 Are the sequences of floats kind of equal?
 
 ```nim
-proc `~=`(a, b: seq[float]): bool
+proc `~=`(a, b: seq[float]): bool 
 ```
 
 ## **proc** total
@@ -38,12 +38,12 @@ Computes total of a sequence.
 proc total(s: seq[SomeNumber]): float
 ```
 
-## **proc** average
+## **proc** mean
 
-Computes average (mean) of a sequence.
+Computes mean (average) of a sequence.
 
 ```nim
-proc average(s: seq[SomeNumber]): float
+proc mean(s: seq[SomeNumber]): float
 ```
 
 ## **proc** median
@@ -139,8 +139,9 @@ proc pstdev(s: seq[SomeNumber]): float
 
 ```nim
 NormalDistribution = object
- mu*: float
- sigma*: float
+  mu*: float
+  sigma*: float
+
 ```
 
 ## **proc** newNormalDistribution
@@ -148,7 +149,7 @@ NormalDistribution = object
 Creates a new NormalDistribution from mean and standard deviation.
 
 ```nim
-proc newNormalDistribution(mu, sigma: float): NormalDistribution
+proc newNormalDistribution(mu, sigma: float): NormalDistribution 
 ```
 
 ## **proc** newNormalDistribution
@@ -164,7 +165,7 @@ proc newNormalDistribution(s: seq[SomeNumber]): NormalDistribution
 Probability density function.
 
 ```nim
-proc pdf(n: NormalDistribution; v: float): float
+proc pdf(n: NormalDistribution; v: float): float 
 ```
 
 ## **proc** cdf
@@ -172,7 +173,7 @@ proc pdf(n: NormalDistribution; v: float): float
 Cumulative distribution function.
 
 ```nim
-proc cdf(n: NormalDistribution; v: float): float
+proc cdf(n: NormalDistribution; v: float): float 
 ```
 
 ## **proc** invCdf
@@ -180,7 +181,7 @@ proc cdf(n: NormalDistribution; v: float): float
 Cumulative distribution (percent point, quantile) function.
 
 ```nim
-proc invCdf(n: NormalDistribution; p: float): float
+proc invCdf(n: NormalDistribution; p: float): float 
 ```
 
 ## **proc** quantiles
@@ -188,7 +189,7 @@ proc invCdf(n: NormalDistribution; p: float): float
 Divide the normal distribution into N regions with equal probability.
 
 ```nim
-proc quantiles(nd: NormalDistribution; n = 4): seq[float]
+proc quantiles(nd: NormalDistribution; n = 4): seq[float] 
 ```
 
 ## **proc** variance
@@ -196,14 +197,14 @@ proc quantiles(nd: NormalDistribution; n = 4): seq[float]
 Computes the sample variance of a normal distribution.
 
 ```nim
-proc variance(nd: NormalDistribution): float
+proc variance(nd: NormalDistribution): float 
 ```
 
 ## **proc** overlap
 
 
 ```nim
-proc overlap(a, b: NormalDistribution): float
+proc overlap(a, b: NormalDistribution): float 
 ```
 
 ## **proc** `+`
@@ -211,7 +212,7 @@ proc overlap(a, b: NormalDistribution): float
 Adds two NormalDistributions.
 
 ```nim
-proc `+`(a, b: NormalDistribution): NormalDistribution
+proc `+`(a, b: NormalDistribution): NormalDistribution 
 ```
 
 ## **proc** `-`
@@ -219,7 +220,7 @@ proc `+`(a, b: NormalDistribution): NormalDistribution
 Subtracts two NormalDistributions.
 
 ```nim
-proc `-`(a, b: NormalDistribution): NormalDistribution
+proc `-`(a, b: NormalDistribution): NormalDistribution 
 ```
 
 ## **proc** `*`
@@ -227,7 +228,7 @@ proc `-`(a, b: NormalDistribution): NormalDistribution
 Multiplies two NormalDistributions.
 
 ```nim
-proc `*`(a: NormalDistribution; b: float): NormalDistribution
+proc `*`(a: NormalDistribution; b: float): NormalDistribution 
 ```
 
 ## **proc** `/`
@@ -235,5 +236,105 @@ proc `*`(a: NormalDistribution; b: float): NormalDistribution
 Divide two NormalDistributions.
 
 ```nim
-proc `/`(a: NormalDistribution; b: float): NormalDistribution
+proc `/`(a: NormalDistribution; b: float): NormalDistribution 
 ```
+
+## **proc** zScore
+
+Computes z score (z statistic).
+
+```nim
+proc zScore(mu, sigma, x: float): float 
+```
+
+## **proc** zScore
+
+Computes z score (z statistic) of normal distribution and a test.
+
+```nim
+proc zScore(nd: NormalDistribution; x: float): float 
+```
+
+## **proc** zScore
+
+Computes z score (z statistic) of two sequencies.
+
+```nim
+proc zScore(a, b: seq[float]): float 
+```
+
+## **proc** zScoreToPValue
+
+Computes p-value from a z-score
+
+```nim
+proc zScoreToPValue(zScore: float): float 
+```
+
+## **proc** zScore
+
+
+```nim
+proc zScore(muA, muB, sigmaA, sigmaB, numA, numB: float): float 
+```
+
+## **proc** zScore
+
+Proportional zTest.
+
+```nim
+proc zScore(rateA, rateB, numA, numB: float): float 
+```
+
+## **proc** pValue
+
+Computes p-value from a z-score
+
+```nim
+proc pValue(zScore: float): float 
+```
+
+## **proc** normalcdf
+
+
+```nim
+proc normalcdf(minZ, maxZ, mean, std: float): float 
+```
+
+## **proc** tStatistic
+
+Same thing as zScore???
+
+```nim
+proc tStatistic(muA, muB, sigmaA, sigmaB, numA, numB: float): float 
+```
+
+## **proc** degreeOfFreedom
+
+
+```nim
+proc degreeOfFreedom(varA: float; varB: float; numA: float; numB: float): float 
+```
+
+## **proc** integrate
+
+Calculate the integral of f using an adaptive Simpson's rule. Based on the work of Hugo Granström Copyright (c) 2019 MIT License <a class="reference external" href="https://github.com/HugoGranstrom/numericalnim">https://github.com/HugoGranstrom/numericalnim</a>
+
+```nim
+proc integrate(f: proc (x: float): float; xStart, xEnd: float; errorTolerance = 1e-08): float 
+```
+
+## **proc** tPdf
+
+
+```nim
+proc tPdf(x: float; df: int): float 
+```
+
+## **proc** tCdf
+
+
+```nim
+proc tCdf(x: float; df: int): float 
+```
+
