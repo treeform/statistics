@@ -302,30 +302,19 @@ proc zScore*(rateA, rateB, numA, numB: float): float =
     varA = rateA * (1-rateA)
   return (rateA - rateB)/sqrt(varB/numB + varA/numA)
 
-# proc tScore*(mu, sigma, x: float): float =
-#   ## Computes t score (t statistic).
-#   (x - mu) / sigma
-
-# proc tScore*(nd: NormalDistribution, x: float): float =
-#   ## Computes t score (t statistic).
-#   (x - nd.mu) / nd.sigma
-
-# proc tScore*(a, b: seq[float]): float =
-#   ## Computes t score (t statistic).
-#   zScore(a.mean, a.pstdev, b.mean)
-
 proc pValue*(zScore: float): float =
   ## Computes p-value from a z-score
   return 0.5 * (1.0 + erf(zScore / sqrt(2.0)))
-
-# proc tScoreToPValue*(zScore: float): float =
-#   ## Computes t-value from a z-score
-#   return 0.5 * (1.0 + erf(zScore / sqrt(2.0)))
 
 proc normalcdf*(minZ, maxZ, mean, std: float): float =
   # Two sided CDF (two tailed CDF).
   let nd = newNormalDistribution(mean, std)
   return nd.cdf(minZ) + (1 - nd.cdf(maxZ))
+
+type TDistribution* = object
+  mu*: float             # Mean.
+  sigma*: float          # Standard deviation.
+  df*: int               # Degrees of Freedom.
 
 proc tStatistic*(muA, muB, sigmaA, sigmaB, numA, numB: float): float =
   ## Same thing as zScore???
@@ -405,15 +394,15 @@ proc integrate*(
 #    t.pdf(x, df) = ---------------------------------------------------
 #                   sqrt(pi*df) * gamma(df/2) * (1+x**2/df)**((df+1)/2)
 
-proc tPdf*(x: float, df: int): float =
-  let df = df.float
+proc pdf*(d: TDistribution, x: float): float =
+  let df = d.df.float
   gamma((df + 1) / 2) / (
     sqrt(PI * df) *
     gamma(df / 2) *
     pow(1 + x ^ 2 / df, (df + 1) / 2)
   )
 
-proc tCdf*(x: float, df: int): float =
+proc cdf*(d: TDistribution, x: float): float =
   func f(x: float): float =
-    tPdf(x, df)
+    d.pdf(x)
   integrate(f, -1E10, x)

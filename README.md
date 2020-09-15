@@ -301,6 +301,17 @@ proc pValue(zScore: float): float
 proc normalcdf(minZ, maxZ, mean, std: float): float 
 ```
 
+## **type** TDistribution
+
+
+```nim
+TDistribution = object
+  mu*: float
+  sigma*: float
+  df*: int
+
+```
+
 ## **proc** tStatistic
 
 Same thing as zScore???
@@ -324,17 +335,17 @@ Calculate the integral of f using an adaptive Simpson's rule. Based on the work 
 proc integrate(f: proc (x: float): float; xStart, xEnd: float; errorTolerance = 1e-08): float 
 ```
 
-## **proc** tPdf
+## **proc** pdf
 
 
 ```nim
-proc tPdf(x: float; df: int): float 
+proc pdf(d: TDistribution; x: float): float 
 ```
 
-## **proc** tCdf
+## **proc** cdf
 
 
 ```nim
-proc tCdf(x: float; df: int): float 
+proc cdf(d: TDistribution; x: float): float 
 ```
 

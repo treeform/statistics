@@ -196,35 +196,38 @@ block display:
 
 block display:
   echo "Student's t-distribution"
-  #et n = newNormalDistribution(0, 1)
+  let d = TDistribution(mu: 0, sigma: 1, df: 1)
   for i in -30 .. 30:
     let x = i.float/10.0
     var s = ""
-    for j in 0 .. (tPdf(x, 1) * 100).int:
+    for j in 0 .. (d.pdf(x) * 100).int:
       s.add "*"
     echo &"{x:>10} ", s
 
 block integration:
   func tt(x: float): float =
-    tPdf(x, 1)
+    TDistribution(mu: 0, sigma: 1, df: 1).pdf(x)
   let xStart = -1E10
   let xEnd = 0.0
   assert integrate(tt, xStart, xEnd) ~= 0.5
 
-  assert tPdf(0, 1)  ~= 0.31830988618379075
-  assert tPdf(1, 1)  ~= 0.15915494309189537
-  assert tPdf(-1, 1) ~= 0.15915494309189537
-  assert tPdf(PI, 1) ~= 0.029284403961554437
-  assert tPdf(0, 3)  ~= 0.36755259694786135
-  assert tPdf(1, 3)  ~= 0.20674833578317203
-  assert tPdf(-1, 3) ~= 0.20674833578317203
-  assert tPdf(PI, 3) ~= 0.019972462315558128
+  let d1 = TDistribution(mu: 0, sigma: 1, df: 1)
+  let d3 = TDistribution(mu: 0, sigma: 1, df: 3)
 
-  assert tCdf(0, 1)  ~= 0.5
-  assert tCdf(1, 1)  ~= 0.7500000000000002
-  assert tCdf(-1, 1) ~= 0.24999999999999978
-  assert tCdf(PI, 1) ~= 0.9019067380477064
-  assert tCdf(0, 3)  ~= 0.5
-  assert tCdf(1, 3)  ~= 0.8044988905221148
-  assert tCdf(-1, 3) ~= 0.19550110947788527
-  assert tCdf(PI, 3) ~= 0.9742000757096718
+  assert d1.pdf(0)  ~= 0.31830988618379075
+  assert d1.pdf(1)  ~= 0.15915494309189537
+  assert d1.pdf(-1) ~= 0.15915494309189537
+  assert d1.pdf(PI) ~= 0.029284403961554437
+  assert d3.pdf(0)  ~= 0.36755259694786135
+  assert d3.pdf(1)  ~= 0.20674833578317203
+  assert d3.pdf(-1) ~= 0.20674833578317203
+  assert d3.pdf(PI) ~= 0.019972462315558128
+
+  assert d1.cdf(0)  ~= 0.5
+  assert d1.cdf(1)  ~= 0.7500000000000002
+  assert d1.cdf(-1) ~= 0.24999999999999978
+  assert d1.cdf(PI) ~= 0.9019067380477064
+  assert d3.cdf(0)  ~= 0.5
+  assert d3.cdf(1)  ~= 0.8044988905221148
+  assert d3.cdf(-1) ~= 0.19550110947788527
+  assert d3.cdf(PI) ~= 0.9742000757096718
