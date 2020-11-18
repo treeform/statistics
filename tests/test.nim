@@ -148,42 +148,6 @@ block:
   assert z ~= 2.2749070654279993
   assert z.zScoreToPValue ~= 0.011455752709549046
 
-  #Z-score:
-  #p-value:
-
-
-
-
-
-block:
-  # X^2-test
-  let
-    numA = 6000
-    numB = 4000
-    convA = 90
-    convB = 80
-    nonConvA = 5910
-    nonConvB = 3920
-
-  let hatP = (convA + convB) / (nonConvA + nonConvB + convA + convB)
-
-  assert hatP ~= 0.017
-
-# block:
-#   # t-test
-#   let
-#     a = @[1.0, 2.0, 3.0, 4.0]
-#     b = @[2.0, 3.0, 4.0, 5.0]
-#   assert tScore(a, a) ~= 0
-#   assert tScore(a, b) ~= 0.894427190
-
-
-# echo tScoreToPValue(0.391)#  = 0.6955
-
-
-#echo normalcdf(-2.5, 2.5, 0, 1)
-
-
 block display:
   echo "Normal Distribution"
   let n = newNormalDistribution(0, 1)
@@ -231,3 +195,97 @@ block integration:
   assert d3.cdf(1)  ~= 0.8044988905221148
   assert d3.cdf(-1) ~= 0.19550110947788527
   assert d3.cdf(PI) ~= 0.9742000757096718
+
+
+block integration:
+
+  let d1 = TDistribution(mu: 0, sigma: 1, df: 1)
+  let d3 = TDistribution(mu: 0, sigma: 1, df: 3)
+
+  assert d1.sf(0) * 2 ~= 1.0
+  assert d1.sf(1) * 2 ~= 0.5
+  assert d1.sf(-1) * 2 ~= 1.5
+  assert d1.sf(-1) * 2 ~= 1.5
+  assert d1.sf(PI) * 2 ~= 0.1961865239045873
+
+  assert d3.sf(0) * 2 ~= 1.0
+  assert d3.sf(1) * 2 ~= 0.39100221895577053
+  assert d3.sf(-1) * 2 ~= 1.6089977810442295
+  assert d3.sf(PI) * 2 ~= 0.051599848580656235
+
+  assert d3.pValue(0)  ~= 1.0
+  assert d3.pValue(1)  ~= 0.39100221895577053
+  assert d3.pValue(-1) ~= 1.6089977810442295
+  assert d3.pValue(PI) ~= 0.051599848580656235
+
+
+block power:
+
+  assert powerForProportion(
+    nA=1000,
+    nB=1020,
+    pA=0.65,
+    pB=0.85,
+    kappa=1,
+    alpha=0.05,
+    beta=0.20
+  ) ~= 1.0
+
+  assert powerForProportion(
+    nA=1000,
+    nB=1001,
+    pA=0.650,
+    pB=0.651,
+    kappa=1,
+    alpha=0.05,
+    beta=0.20
+  ) ~= 0.050257
+
+  assert powerForRate(
+    nA = 1000,
+    nB = 1001,
+    muA=10.2,
+    muB=10.1,
+    kappa=1,
+    sd=10,
+    alpha=0.05,
+    beta=0.20,
+  ) ~= 0.05575302
+
+  assert powerForRate(
+    nA = 5000,
+    nB = 5001,
+    muA=30.2,
+    muB=30.1,
+    kappa=1,
+    sd=10,
+    alpha=0.05,
+    beta=0.20,
+  ) ~= 0.07910344
+
+
+block:
+  let
+    nA = 5_407_800
+    nB = 5_324_140
+
+    nPA = 901_220
+    nPB = 904_004
+
+    alpha = 0.05
+
+  # proportional z test
+  echo proportionalZTestPValue(nPA / nA, nPB / nB, nA.float, nB.float)
+
+block:
+  let
+    nA = 5_407_800
+    nB = 5_324_140
+
+    nPA = 5_312_870
+    nPB = 5_004_799
+
+    alpha = 0.05
+
+  # proportional z test
+  echo proportionalZTestPValue(nPA.float / nA.float, nPB.float / nB.float, nA.float, nB.float)

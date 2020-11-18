@@ -302,6 +302,10 @@ proc zScore*(rateA, rateB, numA, numB: float): float =
     varA = rateA * (1-rateA)
   return (rateA - rateB)/sqrt(varB/numB + varA/numA)
 
+proc proportionalZTestPValue*(rateA, rateB, numA, numB: float): float =
+  ## Returns the P-value of this test.
+  zScore(rateA, rateB, numA, numB).zScoreToPValue()
+
 proc pValue*(zScore: float): float =
   ## Computes p-value from a z-score
   return 0.5 * (1.0 + erf(zScore / sqrt(2.0)))
@@ -315,6 +319,15 @@ type TDistribution* = object
   mu*: float             # Mean.
   sigma*: float          # Standard deviation.
   df*: int               # Degrees of Freedom.
+
+proc newTDistribution(mu, sigma: float, df: int): TDistribution =
+  result.mu = mu
+  result.sigma = sigma
+  result.df = df
+
+proc `+`*(a, b: TDistribution): TDistribution =
+  ## Adds two NormalDistributions.
+  newTDistribution(a.mu + b.mu, hypot(a.sigma, b.sigma), a.df + b.df)
 
 proc tStatistic*(muA, muB, sigmaA, sigmaB, numA, numB: float): float =
   ## Same thing as zScore???
@@ -390,19 +403,111 @@ proc integrate*(
   let right = integrate(f, m, xEnd, errorTolerance = newN)
   return left + right
 
-#                                  gamma((df+1)/2)
-#    t.pdf(x, df) = ---------------------------------------------------
-#                   sqrt(pi*df) * gamma(df/2) * (1+x**2/df)**((df+1)/2)
-
 proc pdf*(d: TDistribution, x: float): float =
+  #                                  gamma((df+1)/2)
+  #    t.pdf(x, df) = ---------------------------------------------------
+  #                   sqrt(pi*df) * gamma(df/2) * (1+x**2/df)**((df+1)/2)
   let df = d.df.float
-  gamma((df + 1) / 2) / (
-    sqrt(PI * df) *
-    gamma(df / 2) *
-    pow(1 + x ^ 2 / df, (df + 1) / 2)
-  )
+  if gamma(df / 2).classify == fcInf:
+    result = 0.0
+  else:
+    result = gamma((df + 1) / 2) / (
+      sqrt(PI * df) *
+      gamma(df / 2) *
+      pow(1 + x ^ 2 / df, (df + 1) / 2)
+    )
+  if result.isNan:
+    quit()
+  #debugEcho "pdf exit: ", result
 
 proc cdf*(d: TDistribution, x: float): float =
   func f(x: float): float =
     d.pdf(x)
   integrate(f, -1E10, x)
+
+proc sf*(d: TDistribution, x: float): float =
+  1 - d.cdf(x)
+
+proc pValue*(d: TDistribution, x: float): float =
+  d.sf(x) * 2
+
+proc pnorm(x: float): float =
+  var n = NormalDistribution()
+  n.mu = 0
+  n.sigma = 1
+  n.cdf(x)
+
+proc qnorm(x: float): float =
+  var n = NormalDistribution()
+  n.mu = 0
+  n.sigma = 1
+  n.invCdf(x)
+
+proc powerForProportion*(
+  nA: float,
+  nB: float,
+  pA: float,
+  pB: float,
+  kappa: float,
+  alpha: float,
+  beta: float,
+): float =
+  ## Is for proportion Z test
+  ## See: http://powerandsamplesize.com/Calculators/Compare-2-Proportions/2-Sample-Equality
+  var z = (pA - pB) / sqrt(pA * (1 - pA) / nA + pB * (1 - pB) / nB)
+  return pnorm(z-qnorm(1-alpha/2)) + pnorm(-z-qnorm(1-alpha/2))
+
+proc powerForRate*(
+  nA: float,
+  nB: float,
+  muA: float,
+  muB: float,
+  kappa: float,
+  sd: float,
+  alpha: float,
+  beta: float,
+): float =
+  ## Is for rate Z and T test (if nA+nB > 1000).
+  ## See: http://powerandsamplesize.com/Calculators/Compare-2-Means/2-Sample-Equality
+  let z = (muA - muB) / (sd * sqrt((1 + 1 / kappa) / nB))
+  return pnorm(z - qnorm(1 - alpha / 2)) + pnorm(-z - qnorm(1 - alpha / 2))
+
+
+proc ttest_helper*(
+    mean1: float,
+    mean2: float,
+    sigma1: float,
+    sigma2: float,
+    df: float,
+  ): float64 {.cdecl, exportc: "ttest_helper", dynlib.} =
+
+  #echo "got", (mean1, mean2, sigma1, sigma2, df)
+
+  let
+    d1 = TDistribution(mu: mean1, sigma: sigma1, df: 0)
+    d2 = TDistribution(mu: mean2, sigma: sigma2, df: df.int)
+    d = d1 + d2
+
+  return d.pValue(0)
+
+  # let d1 = TDistribution(mu: 0, sigma: 1, df: 1)
+  # let d3 = TDistribution(mu: 0, sigma: 1, df: 3)
+
+  # assert d1.sf(0) * 2 ~= 1.0
+  # assert d1.sf(1) * 2 ~= 0.5
+  # assert d1.sf(-1) * 2 ~= 1.5
+  # assert d1.sf(-1) * 2 ~= 1.5
+  # assert d1.sf(PI) * 2 ~= 0.1961865239045873
+
+  # assert d3.sf(0) * 2 ~= 1.0
+  # assert d3.sf(1) * 2 ~= 0.39100221895577053
+  # assert d3.sf(-1) * 2 ~= 1.6089977810442295
+  # assert d3.sf(PI) * 2 ~= 0.051599848580656235
+
+  # assert d3.pValue(0)  ~= 1.0
+  # assert d3.pValue(1)  ~= 0.39100221895577053
+  # assert d3.pValue(-1) ~= 1.6089977810442295
+  # assert d3.pValue(PI) ~= 0.051599848580656235
+
+
+#echo ttest_helper(0.1640627505823723, 0.1640627505823723, 0.4989602820941862, 0.4989602820941862, 3326908)

@@ -1,0 +1,104 @@
+Beta distribution.
+beta(a, b[, size])
+
+binomial distribution.
+binomial(n, p[, size])
+
+chi-square distribution.
+chisquare(df[, size])
+
+The Dirichlet distribution.
+dirichlet(alpha[, size])
+
+Exponential distribution.
+exponential([scale, size])
+
+F distribution.
+f(dfnum, dfden[, size])
+
+Gamma distribution.
+gamma(shape[, scale, size])
+
+The geometric distribution.
+geometric(p[, size])
+
+Gumbel distribution.
+gumbel([loc, scale, size])
+
+Hypergeometric distribution.
+hypergeometric(ngood, nbad, nsample[, size])
+
+The Laplace or double exponential distribution with specified location (or mean) and scale (decay).
+laplace([loc, scale, size])
+
+logistic distribution.
+logistic([loc, scale, size])
+
+log-normal distribution.
+lognormal([mean, sigma, size])
+
+logarithmic series distribution.
+logseries(p[, size])
+
+multinomial distribution.
+multinomial(n, pvals[, size])
+
+Draw random samples from a multivariate normal distribution.
+multivariate_normal(mean, cov[, size, …)
+
+negative binomial distribution.
+negativeBinomial(n, p[, size])
+
+noncentral chi-square distribution.
+noncentral_chisquare(df, nonc[, size])
+
+The noncentral F distribution.
+noncentral_f(dfnum, dfden, nonc[, size])
+
+Normal (Gaussian, Bell Curve) distribution.
+normal([loc, scale, size])
+
+Pareto II or Lomax distribution with specified shape.
+pareto(a[, size])
+
+Poisson distribution.
+poisson([lam, size])
+
+Power distribution with positive exponent a - 1.
+power(a[, size])
+
+Rayleigh distribution.
+rayleigh([scale, size])
+
+Standard Cauchy distribution with mode = 0.
+standard_cauchy([size])
+
+The standard exponential distribution.
+standard_exponential([size])
+
+Standard Gamma distribution.
+standard_gamma(shape[, size])
+
+Standard Normal distribution (mean=0, stdev=1).
+standardNormal([size])
+
+Standard Student’s t distribution with df degrees of freedom.
+standardT(df[, size])
+
+The triangular distribution over the interval [left, right].
+triangular(left, mode, right[, size])
+
+Uniform distribution.
+uniform([low, high, size])
+
+Von Mises distribution.
+vonmises(mu, kappa[, size])
+
+Wald, or inverse Gaussian, distribution.
+wald(mean, scale[, size])
+
+Weibull distribution.
+weibull(a[, size])
+
+Zipf distribution.
+zipf(a[, size])
