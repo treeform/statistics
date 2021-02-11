@@ -23,7 +23,6 @@ proc total*(s: seq[SomeNumber]): float =
   for v in s:
     result += v.float
 
-# TODO maybe rename to mean?
 proc mean*(s: seq[SomeNumber]): float =
   ## Computes mean (average) of a sequence.
   if s.len == 0: return NaN
@@ -38,13 +37,17 @@ proc median*(s: seq[SomeNumber]): float =
   else:
     s2[s.len div 2].float * 0.5 + s2[s.len div 2 + 1].float * 0.5
 
-proc mode*(s: seq[SomeNumber]): float =
+proc mode*[T:SomeNumber](s: seq[T]): seq[T] =
   ## Computes the mode of a sequence.
-  if s.len == 0: return NaN
-  var table: CountTable[float]
+  if s.len == 0: return
+  var table: CountTable[T]
   for v in s:
-    table.inc(v.float)
-  table.largest().key
+    table.inc(v)
+  let max = table.largest().val
+  for (k, v) in table.pairs:
+    if v == max:
+      result.add k
+  result.sort()
 
 proc multiMode*(s: seq[SomeNumber]): CountTable[float] =
   ## Returns all modes of > 1.
@@ -408,6 +411,9 @@ proc pdf*(d: TDistribution, x: float): float =
   #    t.pdf(x, df) = ---------------------------------------------------
   #                   sqrt(pi*df) * gamma(df/2) * (1+x**2/df)**((df+1)/2)
   let df = d.df.float
+
+  #debugEcho "got df:", df
+
   if gamma(df / 2).classify == fcInf:
     result = 0.0
   else:
@@ -474,40 +480,82 @@ proc powerForRate*(
 
 
 proc ttest_helper*(
-    mean1: float,
-    mean2: float,
-    sigma1: float,
-    sigma2: float,
-    df: float,
+    tStatistic: float64,
+    df: float64,
   ): float64 {.cdecl, exportc: "ttest_helper", dynlib.} =
 
-  #echo "got", (mean1, mean2, sigma1, sigma2, df)
+  #                                  gamma((df+1)/2)
+  #    t.pdf(x, df) = ---------------------------------------------------
+  #                   sqrt(pi*df) * gamma(df/2) * (1+x**2/df)**((df+1)/2)
 
-  let
-    d1 = TDistribution(mu: mean1, sigma: sigma1, df: 0)
-    d2 = TDistribution(mu: mean2, sigma: sigma2, df: df.int)
-    d = d1 + d2
+  echo "got tStatistic: ", tStatistic
+  echo "got df: ", df
 
-  return d.pValue(0)
+  func npdf(x: float64): float64 =
+    ## Probability density function.
+    let mu = 0.0
+    let sigma = 1.0
+    let variance = sigma ^ 2
+    exp((x - mu) ^ 2 / (-2.0 * variance)) / sqrt(TAU * variance)
 
-  # let d1 = TDistribution(mu: 0, sigma: 1, df: 1)
-  # let d3 = TDistribution(mu: 0, sigma: 1, df: 3)
+  func tpdf(x: float64): float64 =
+    # if gamma(df / 2).classify == fcInf:
+    #   result = 0.0
+    # else:
+    # debugEcho "gamma:", gamma((df + 1) / 2)
 
-  # assert d1.sf(0) * 2 ~= 1.0
-  # assert d1.sf(1) * 2 ~= 0.5
-  # assert d1.sf(-1) * 2 ~= 1.5
-  # assert d1.sf(-1) * 2 ~= 1.5
-  # assert d1.sf(PI) * 2 ~= 0.1961865239045873
+    if df > 342:
+      return npdf(x)
 
-  # assert d3.sf(0) * 2 ~= 1.0
-  # assert d3.sf(1) * 2 ~= 0.39100221895577053
-  # assert d3.sf(-1) * 2 ~= 1.6089977810442295
-  # assert d3.sf(PI) * 2 ~= 0.051599848580656235
+    result = gamma((df + 1) / 2) / (
+      sqrt(PI * df) *
+      gamma(df / 2) *
+      pow(1 + x ^ 2 / df, (df + 1) / 2)
+    )
+    if result.isNan:
+      debugEcho "Got Nan!!!!"
+      quit()
 
-  # assert d3.pValue(0)  ~= 1.0
-  # assert d3.pValue(1)  ~= 0.39100221895577053
-  # assert d3.pValue(-1) ~= 1.6089977810442295
-  # assert d3.pValue(PI) ~= 0.051599848580656235
+  let cdf = 1.0 - integrate(tpdf, -1E10, tStatistic)
+
+  echo "nim cdf: ", cdf
+
+  let sf = 1 - cdf
 
 
-#echo ttest_helper(0.1640627505823723, 0.1640627505823723, 0.4989602820941862, 0.4989602820941862, 3326908)
+
+  return sf * 2.0
+
+
+when isMainModule:
+  for df in 1 .. 1000:
+    let df = df.float32
+
+    proc npdf(x: float64): float64 =
+      ## Probability density function.
+      let mu = 0.0
+      let sigma = 1.0
+      let variance = sigma ^ 2
+      exp((x - mu) ^ 2 / (-2.0 * variance)) / sqrt(TAU * variance)
+
+
+    proc tpdf(x: float64): float64 =
+      # if gamma(df / 2).classify == fcInf:
+      #   result = 0.0
+      # else:
+      # debugEcho "gamma:", gamma((df + 1) / 2)
+
+      if df > 69:
+        return npdf(x)
+
+      result = gamma((df + 1) / 2) / (
+        sqrt(PI * df) *
+        gamma(df / 2) *
+        pow(1 + x ^ 2 / df, (df + 1) / 2)
+      )
+
+      if result.isNan:
+        quit("Its nan!")
+
+    let t = 0.1
+    echo "df: ", df, " t: ", t, " pdf: ", integrate(tpdf, -1E10, t)

@@ -16,11 +16,12 @@ assert median(@[1, 2, 3, 4]) == 3.5
 assert median(@[1, 2, 3, 4, 5]) == 3
 assert t1.median() == 14
 
-assert mode(emptySeq).isNaN
-assert mode(@[1, 2, 3, 4]) == 1
-assert mode(@[1, 2, 2, 3, 3, 4, 5]) == 2
-assert mode(@[1, 2, 2, 3, 3, 4, 4, 4, 5]) == 4
-assert t1.mode() == 13
+assert mode(emptySeq) == @[]
+echo mode(@[1, 2, 3, 4])
+assert mode(@[1, 2, 3, 4]) == @[1, 2, 3, 4]
+assert mode(@[1, 2, 2, 3, 3, 4, 5]) == @[2, 3]
+assert mode(@[1, 2, 2, 3, 3, 4, 4, 4, 5]) == @[4]
+assert t1.mode() == @[13]
 
 var mm = multiMode(@[1, 2, 2, 3, 3, 4, 5])
 assert mm[2] == 2
